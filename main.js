@@ -1,6 +1,9 @@
 const { app, BrowserWindow, Menu, screen } = require('electron')
 const { autoUpdater } = require('electron-updater');
 const ipcMain = require('electron').ipcMain;
+(function(s) {
+  // in this context $ refers to the document.id
+})(document.id);
 
 let menuTemplate = [
 ];
