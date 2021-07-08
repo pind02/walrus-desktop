@@ -1,0 +1,4 @@
+appId: com.walruslabs.walrus-desktop
+publish:
+  provider: github
+  token: [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]

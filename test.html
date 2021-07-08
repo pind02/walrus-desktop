@@ -1,0 +1,10 @@
+<button id="cancel-btn">Cancel</button>
+<script>
+ const remote = require('electron').remote;
+
+  document.getElementById("cancel-btn").addEventListener("click", function (e) {
+       var window = remote.getCurrentWindow();
+       window.close();
+  });
+
+</script>
