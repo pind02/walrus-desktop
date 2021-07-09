@@ -2,11 +2,16 @@
   "name": "walrus-desktop",
   "version": "1.0.1",
   "main": "main.js",
+  "description": "Walrus desktop app",
+  "author": "Gopi Kumar",
+  "build": {
+    "appId": "com.walruslabs.walrus-desktop"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng build --base-href ./ && electron .",
     "build": "electron-builder build --win --publish never",
-    "deploy": "electron-builder build git add .--win --publish always",
+    "deploy": "electron-builder build --win --publish always",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
