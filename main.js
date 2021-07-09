@@ -7,7 +7,7 @@ let menuTemplate = [
 ];
 
 let origin = "https://walruslabs.com";
-let openDevTools = true;
+let openDevTools = false;
 
 let mainWindow;
 let screenWidth, screenHeight;
