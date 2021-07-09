@@ -1,6 +1,6 @@
 {
   "name": "walrus-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "main.js",
   "scripts": {
     "ng": "ng",
@@ -37,6 +37,7 @@
     "@types/node": "^12.11.1",
     "electron": "^13.1.6",
     "electron-builder": "^22.11.7",
+    "electron-winstaller": "^5.0.0",
     "jasmine-core": "~3.7.0",
     "karma": "~6.3.0",
     "karma-chrome-launcher": "~3.1.0",

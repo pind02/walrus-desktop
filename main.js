@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, screen } = require('electron')
-require('update-electron-app')()
 const ipcMain = require('electron').ipcMain;
+const { autoUpdater } = require('electron-updater');
+
 
 let menuTemplate = [
 ];
@@ -37,10 +38,6 @@ function createWindow() {
   mainWindow.on('closed', function () {
     mainWindow = null
   })
-
-  mainWindow.once('ready-to-show', () => {
-    autoUpdater.checkForUpdatesAndNotify();
-  });
 
   mainWindow.webContents.setWindowOpenHandler(details => {
     console.log("New window:", details)
@@ -93,6 +90,9 @@ function createWindow() {
   });
 
 
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
 
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
@@ -114,3 +114,13 @@ app.whenReady().then(() => {
   screenWidth = width
   screenHeight = height
 })
+
+autoUpdater.on('update-available', () => {
+  mainWindow.webContents.send('update_available');
+});
+autoUpdater.on('update-downloaded', () => {
+  mainWindow.webContents.send('update_downloaded');
+});
+ipcMain.on('restart_app', () => {
+  autoUpdater.quitAndInstall();
+});
