@@ -1,11 +1,14 @@
 {
   "name": "walrus-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "main.js",
   "description": "Walrus desktop app",
   "author": "Gopi Kumar",
   "build": {
-    "appId": "com.walruslabs.walrus-desktop"
+    "appId": "com.walruslabs.walrus-desktop",
+    "win":{
+      "publish": ["github"]
+    }
   },
   "scripts": {
     "ng": "ng",
