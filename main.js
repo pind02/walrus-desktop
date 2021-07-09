@@ -1,5 +1,5 @@
 const { app, BrowserWindow, Menu, screen } = require('electron')
-const { autoUpdater } = require('electron-updater');
+require('update-electron-app')()
 const ipcMain = require('electron').ipcMain;
 
 let menuTemplate = [
@@ -114,13 +114,3 @@ app.whenReady().then(() => {
   screenWidth = width
   screenHeight = height
 })
-
-autoUpdater.on('update-available', () => {
-  mainWindow.webContents.send('update_available');
-});
-autoUpdater.on('update-downloaded', () => {
-  mainWindow.webContents.send('update_downloaded');
-});
-ipcMain.on('restart_app', () => {
-  autoUpdater.quitAndInstall();
-});
