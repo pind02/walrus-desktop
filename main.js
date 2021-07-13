@@ -2,22 +2,24 @@ const { app, BrowserWindow, Menu, screen } = require('electron')
 const ipcMain = require('electron').ipcMain;
 const { autoUpdater } = require('electron-updater');
 
-
 let menuTemplate = [
 ];
 
-let origin = "https://walruslabs.com";
-let openDevTools = false;
+let homepage = "https://walruslabs.com/dashboard";
+let openDevTools = true;
 
 let mainWindow;
-let screenWidth, screenHeight;
-
+var display, dimensions, scaleFactor;
 
 function createWindow() {
 
+  display = screen.getPrimaryDisplay()
+  dimensions = display.workArea
+  scaleFactor = display.scaleFactor
+
   mainWindow = new BrowserWindow({
-    width: screenWidth,
-    height: screenHeight,
+    width: dimensions.width / scaleFactor,
+    height: dimensions.height / scaleFactor,
     titleBarStyle: 'hiddenInset',
     icon: __dirname + "/icon.png",
     webPreferences: {
@@ -28,7 +30,7 @@ function createWindow() {
 
   mainWindow.setResizable(true);
 
-  mainWindow.loadURL(origin+"/dashboard");
+  mainWindow.loadURL(homepage);
 
   // Open the DevTools.
   if(openDevTools){
@@ -40,7 +42,6 @@ function createWindow() {
   })
 
   mainWindow.webContents.setWindowOpenHandler(details => {
-    console.log("New window:", details)
     let wins = BrowserWindow.getAllWindows();
     let url = details.url;
 
@@ -54,17 +55,22 @@ function createWindow() {
       }
     })
 
+    let position = null;
+    if(url.indexOf('/workflow/checkinsummary') >= 0){
+      position = 'bottom-right';
+    }else if(url.indexOf('/summons') >= 0){
+      position = 'top-center';
+    }
 
-    let width = 250;
-    let height = 110; //450;
+    let coords = getWindowCoordinates(null, position);
 
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
-        width: width,
-        height: height,
-        x: 0,
-        y: 0,
+        width: coords.width,
+        height: coords.height,
+        x: coords.x,
+        y: coords.y,
         alwaysOnTop: true,
         skipTaskbar: true,
         frame: false,
@@ -80,14 +86,34 @@ function createWindow() {
     wins.forEach(win => {
       if (win.webContents.getURL() == url) {
         console.log("Window exists and setting size", size);
-        if(size == 'chat'){
-          win.setSize(250, 450);
-        }else{
-          win.setSize(250, 110);
-        }
+        let coords = getWindowCoordinates(size);
+        win.setSize(coords.width, coords.height);
       }
     })
   });
+
+  function getWindowCoordinates(size, position){
+    let offset = 10
+    let startingWidth = 500 / scaleFactor
+    let startingHeight = 110 / scaleFactor
+    let output = {
+      x: dimensions.width - startingWidth - offset,
+      y: 0+offset,
+      width: startingWidth,
+      height: startingHeight
+    }
+    if(size == 'chat'){
+      output.height = 450 / scaleFactor;
+    }
+
+    if(position == 'bottom-right'){
+      output.y = dimensions.height - output.height - offset
+    }else if(position == 'top-center'){
+      output.x = (dimensions.width - output.width)/2
+    }
+    return output;
+
+  }
 
 
   mainWindow.once('ready-to-show', () => {
@@ -99,8 +125,6 @@ function createWindow() {
 
 }
 
-app.whenReady().then(createWindow)
-
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
@@ -110,9 +134,7 @@ app.on('activate', function () {
 })
 
 app.whenReady().then(() => {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
-  screenWidth = width
-  screenHeight = height
+  createWindow();
 })
 
 autoUpdater.on('update-available', () => {
