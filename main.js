@@ -2,11 +2,12 @@ const { app, BrowserWindow, Menu, screen } = require('electron')
 const ipcMain = require('electron').ipcMain;
 const { autoUpdater } = require('electron-updater');
 
+
 let menuTemplate = [
 ];
 
 let homepage = "https://walruslabs.com/dashboard";
-let openDevTools = true;
+let openDevTools = false;
 
 let mainWindow;
 var display, dimensions, scaleFactor;
@@ -17,7 +18,7 @@ function createWindow() {
   dimensions = display.workArea
   scaleFactor = display.scaleFactor
 
-  mainWindow = new BrowserWindow({
+  let basicWindowOptions = {
     width: dimensions.width / scaleFactor,
     height: dimensions.height / scaleFactor,
     titleBarStyle: 'hiddenInset',
@@ -25,9 +26,31 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-    }
-  })
+    },
+    show: false // don't show the main window
+  }
 
+  mainWindow = new BrowserWindow(basicWindowOptions)
+
+  splashWindowOptions = basicWindowOptions;
+
+  splashWindowOptions.frame = false
+  splashWindowOptions.alwaysOnTop = true
+  splashWindowOptions.show = true
+  splashWindow = new BrowserWindow(splashWindowOptions)
+  splashWindow.loadURL('file:/'+__dirname+'/splash.html');
+
+  // if main window is ready to show, then destroy the splash window and show up the main window
+  mainWindow.once('ready-to-show', () => {
+    setTimeout(loadMainWindow, 2000);
+  });
+
+  function loadMainWindow(){
+    splashWindow.destroy();
+    mainWindow.show();
+  }
+
+  mainWindow.maximize();
   mainWindow.setResizable(true);
 
   mainWindow.loadURL(homepage);
@@ -58,8 +81,6 @@ function createWindow() {
     let position = null;
     if(url.indexOf('/workflow/checkinsummary') >= 0){
       position = 'bottom-right';
-    }else if(url.indexOf('/summons') >= 0){
-      position = 'top-center';
     }
 
     let coords = getWindowCoordinates(null, position);
@@ -108,8 +129,6 @@ function createWindow() {
 
     if(position == 'bottom-right'){
       output.y = dimensions.height - output.height - offset
-    }else if(position == 'top-center'){
-      output.x = (dimensions.width - output.width)/2
     }
     return output;
 
