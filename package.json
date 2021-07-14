@@ -1,6 +1,6 @@
 {
   "name": "walrus-desktop",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "main.js",
   "description": "Walrus desktop app",
   "author": "Gopi Kumar",
@@ -8,7 +8,15 @@
     "appId": "com.walruslabs.walrus-desktop",
     "productName": "Walrus",
     "win":{
-      "publish": ["github"]
+      "publish": ["github"],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "ia32"
+          ]
+        }
+      ]
     }
   },
   "scripts": {

@@ -37,12 +37,18 @@ function createWindow() {
   splashWindowOptions.frame = false
   splashWindowOptions.alwaysOnTop = true
   splashWindowOptions.show = true
+  splashWindowOptions.webPreferences = {
+    preload: __dirname + '/splash.js',
+    enableRemoteModule: true
+  }
   splashWindow = new BrowserWindow(splashWindowOptions)
   splashWindow.loadURL('file:/'+__dirname+'/splash.html');
-
+  if(openDevTools){
+    splashWindow.webContents.openDevTools()
+  }
   // if main window is ready to show, then destroy the splash window and show up the main window
   mainWindow.once('ready-to-show', () => {
-    setTimeout(loadMainWindow, 2000);
+    setTimeout(loadMainWindow, 20000);
   });
 
   function loadMainWindow(){
@@ -50,7 +56,7 @@ function createWindow() {
     mainWindow.show();
   }
 
-  mainWindow.maximize();
+  //mainWindow.maximize();
   mainWindow.setResizable(true);
 
   mainWindow.loadURL(homepage);
@@ -165,3 +171,4 @@ autoUpdater.on('update-downloaded', () => {
 ipcMain.on('restart_app', () => {
   autoUpdater.quitAndInstall();
 });
+
