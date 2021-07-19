@@ -6,7 +6,8 @@ const { autoUpdater } = require('electron-updater');
 let menuTemplate = [
 ];
 
-let homepage = "https://walruslabs.com/dashboard";
+let origin = "https://walruslabs.com"
+let homepage = origin+"/dashboard";
 let openDevTools = false;
 
 let mainWindow;
@@ -30,10 +31,12 @@ function createWindow() {
     show: false // don't show the main window
   }
 
-  mainWindow = new BrowserWindow(basicWindowOptions)
-
-  splashWindowOptions = basicWindowOptions;
-
+  let splashWindowOptions = {...basicWindowOptions}
+  let size = 400
+  splashWindowOptions.width = size
+  splashWindowOptions.height = size
+  splashWindowOptions.x = dimensions.width / 2 - size/2
+  splashWindowOptions.y = dimensions.height / 2 - size/2
   splashWindowOptions.frame = false
   splashWindowOptions.alwaysOnTop = true
   splashWindowOptions.show = true
@@ -41,14 +44,27 @@ function createWindow() {
     preload: __dirname + '/splash.js',
     enableRemoteModule: true
   }
+
+  let popupWindowOptions = {...basicWindowOptions}
+  popupWindowOptions.alwaysOnTop = true;
+  popupWindowOptions.skipTaskbar= true;
+  popupWindowOptions.frame = false;
+  popupWindowOptions.show = true
+
+
+
+  //clear session data
+  mainWindow = new BrowserWindow(basicWindowOptions)
+
   splashWindow = new BrowserWindow(splashWindowOptions)
   splashWindow.loadURL('file:/'+__dirname+'/splash.html');
   if(openDevTools){
     splashWindow.webContents.openDevTools()
   }
+
   // if main window is ready to show, then destroy the splash window and show up the main window
   mainWindow.once('ready-to-show', () => {
-    setTimeout(loadMainWindow, 20000);
+    setTimeout(loadMainWindow, 1500);
   });
 
   function loadMainWindow(){
@@ -59,7 +75,7 @@ function createWindow() {
   //mainWindow.maximize();
   mainWindow.setResizable(true);
 
-  mainWindow.loadURL(homepage);
+  mainWindow.loadURL(homepage,  {"extraHeaders" : "pragma: no-cache\n"});
 
   // Open the DevTools.
   if(openDevTools){
@@ -70,23 +86,43 @@ function createWindow() {
     mainWindow = null
   })
 
-  mainWindow.webContents.setWindowOpenHandler(details => {
+  function doesWindowExist(url){
     let wins = BrowserWindow.getAllWindows();
-    let url = details.url;
-
+    let output = false
     //double check that window doesn't already exist
     wins.forEach(win => {
       if (win.webContents.getURL() == url) {
-        console.log("Window exists - not opening again");
-        return {
-          action: 'deny',
-        }
+        output = true;
       }
     })
+    return output;
+  }
+
+  mainWindow.webContents.setWindowOpenHandler(details => {
+    let url = details.url;
+    if(doesWindowExist(url)){
+      console.log("Window exists - not opening again");
+      return {
+        action: 'deny',
+      }
+    }
 
     let position = null;
-    if(url.indexOf('/workflow/checkinsummary') >= 0){
-      position = 'bottom-right';
+    //if blob - just open normal window
+    if(url.startsWith('blob')){
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: dimensions.width,
+          height: dimensions.height,
+          x: 0,
+          y: 0,
+          alwaysOnTop: false,
+          skipTaskbar: false,
+          titleBarStyle: 'hidden-inset',
+          openDevTools: openDevTools
+        }
+      }
     }
 
     let coords = getWindowCoordinates(null, position);
@@ -101,14 +137,11 @@ function createWindow() {
         alwaysOnTop: true,
         skipTaskbar: true,
         frame: false,
-        roundedCorners: true,
       }
     }
   })
 
   ipcMain.on('resize-window', (event, url, size) => {
-    console.log(event)
-    console.log(url)
     let wins = BrowserWindow.getAllWindows();
     wins.forEach(win => {
       if (win.webContents.getURL() == url) {
@@ -117,6 +150,39 @@ function createWindow() {
         win.setSize(coords.width, coords.height);
       }
     })
+  });
+
+  ipcMain.on('open-window', (event, url, size, position) => {
+    if(!url.startsWith("https://")){
+      url = origin + url
+    }
+    console.log("Does win exist", doesWindowExist(url))
+    if(doesWindowExist(url)){
+      console.log("Window exists - not reopening");
+    }else{
+      console.log("Opening popup", url)
+      if(url.indexOf("/workflow/checkinsummary") >= 0){
+        position = "bottom-right"
+      }else if(url.indexOf("/summon") >= 0){
+        position = "top-center"
+      }
+
+      console.log("Opening at position", position)
+      console.log("Opening with size", size)
+      let coord = getWindowCoordinates(size, position);
+      popupWindowOptions.x = Math.round(coord.x)
+      popupWindowOptions.y = Math.round(coord.y)
+      popupWindowOptions.width = Math.round(coord.width)
+      popupWindowOptions.height = Math.round(coord.height)
+      //content size is too large
+      popupWindowOptions.useContentSize = false
+      const popup = new BrowserWindow(popupWindowOptions)
+
+      popup.loadURL(url,  {"extraHeaders" : "pragma: no-cache\n"})
+      if(openDevTools){
+        popup.webContents.openDevTools()
+      }
+    }
   });
 
   function getWindowCoordinates(size, position){
@@ -135,6 +201,9 @@ function createWindow() {
 
     if(position == 'bottom-right'){
       output.y = dimensions.height - output.height - offset
+    }else if(position == 'top-center'){
+      output.y = offset
+      output.x = dimensions.width / 2 - output.width / 2 + offset / 2
     }
     return output;
 
