@@ -27,6 +27,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      zoomFactor: 1.0 / scaleFactor
     },
     show: false // don't show the main window
   }
@@ -170,12 +171,13 @@ function createWindow() {
       console.log("Opening at position", position)
       console.log("Opening with size", size)
       let coord = getWindowCoordinates(size, position);
-      popupWindowOptions.x = Math.round(coord.x)
-      popupWindowOptions.y = Math.round(coord.y)
-      popupWindowOptions.width = Math.round(coord.width)
-      popupWindowOptions.height = Math.round(coord.height)
+      popupWindowOptions.x = coord.x
+      popupWindowOptions.y = coord.y
+      popupWindowOptions.width = coord.width
+      popupWindowOptions.height = coord.height
+      console.log("Popup window options:",popupWindowOptions)
       //content size is too large
-      popupWindowOptions.useContentSize = false
+      //popupWindowOptions.useContentSize = false
       const popup = new BrowserWindow(popupWindowOptions)
 
       popup.loadURL(url,  {"extraHeaders" : "pragma: no-cache\n"})
@@ -196,7 +198,7 @@ function createWindow() {
       height: startingHeight
     }
     if(size == 'chat'){
-      output.height = 450 / scaleFactor;
+      output.height = 650 / scaleFactor;
     }
 
     if(position == 'bottom-right'){
@@ -205,6 +207,10 @@ function createWindow() {
       output.y = offset
       output.x = dimensions.width / 2 - output.width / 2 + offset / 2
     }
+    let toRound = ['x','y','width', 'height']
+    toRound.forEach(x =>{
+      output[x] = Math.round(output[x])
+    })
     return output;
 
   }
