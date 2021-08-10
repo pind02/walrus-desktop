@@ -22,6 +22,8 @@ function createWindow() {
   let basicWindowOptions = {
     width: dimensions.width / scaleFactor,
     height: dimensions.height / scaleFactor,
+    x: dimensions.width / 2 - dimensions.width / scaleFactor/2,
+    y: dimensions.height / 2 - dimensions.height / scaleFactor/2,
     titleBarStyle: 'hiddenInset',
     icon: __dirname + "/icon.png",
     webPreferences: {
@@ -29,15 +31,10 @@ function createWindow() {
       contextIsolation: false,
       zoomFactor: 1.0 / scaleFactor
     },
-    show: false // don't show the main window
+    show: true // don't show the main window causes input issues when
   }
 
   let splashWindowOptions = {...basicWindowOptions}
-  let size = 400
-  splashWindowOptions.width = size
-  splashWindowOptions.height = size
-  splashWindowOptions.x = dimensions.width / 2 - size/2
-  splashWindowOptions.y = dimensions.height / 2 - size/2
   splashWindowOptions.frame = false
   splashWindowOptions.alwaysOnTop = true
   splashWindowOptions.show = true
@@ -57,21 +54,19 @@ function createWindow() {
   //clear session data
   mainWindow = new BrowserWindow(basicWindowOptions)
 
-  splashWindow = new BrowserWindow(splashWindowOptions)
-  splashWindow.loadURL('file:/'+__dirname+'/splash.html');
-  if(openDevTools){
-    splashWindow.webContents.openDevTools()
-  }
+  //splash window is causing issues with unresponsive main input - removing
+  //splashWindow = new BrowserWindow(splashWindowOptions)
+  //splashWindow.loadURL('file:/'+__dirname+'/splash.html');
+  // if(openDevTools){
+  //   splashWindow.webContents.openDevTools()
+  // }
 
-  // if main window is ready to show, then destroy the splash window and show up the main window
-  mainWindow.once('ready-to-show', () => {
-    setTimeout(loadMainWindow, 1500);
-  });
-
-  function loadMainWindow(){
-    splashWindow.destroy();
-    mainWindow.show();
-  }
+  // // if main window is ready to show, then destroy the splash window and show up the main window
+  // mainWindow.once('ready-to-show', () => {
+  //   console.log("Main window is ready to show")
+  //   //splashWindow.destroy();
+  //   //mainWindow.show();
+  // });
 
   //mainWindow.maximize();
   mainWindow.setResizable(true);
@@ -143,6 +138,7 @@ function createWindow() {
   })
 
   ipcMain.on('resize-window', (event, url, size) => {
+    console.log("Received resize request for url:", url)
     let wins = BrowserWindow.getAllWindows();
     wins.forEach(win => {
       if (win.webContents.getURL() == url) {
