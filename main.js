@@ -1,12 +1,17 @@
-const { app, BrowserWindow, Menu, screen } = require('electron')
+const { app, BrowserWindow, Menu, screen, electron } = require('electron')
 const ipcMain = require('electron').ipcMain;
+const shell = require('electron').shell
 const { autoUpdater } = require('electron-updater');
 
 
 let menuTemplate = [
 ];
 
-let origin = "https://walruslabs.com"
+//to run dev, run ngrok with command: ngrok http "https://localhost:4200" --host-header=rewrite
+//does not fully work - need to connect to localhost:8443 port via ngrok...
+let devOrigin = "https://1533-204-14-36-35.ngrok.io"
+let prodOrigin = "https://walruslabs.com"
+let origin = prodOrigin;
 let homepage = origin+"/dashboard";
 let openDevTools = false;
 
@@ -104,22 +109,7 @@ function createWindow() {
     }
 
     let position = null;
-    //if blob - just open normal window
-    if(url.startsWith('blob')){
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: dimensions.width,
-          height: dimensions.height,
-          x: 0,
-          y: 0,
-          alwaysOnTop: false,
-          skipTaskbar: false,
-          titleBarStyle: 'hidden-inset',
-          openDevTools: openDevTools
-        }
-      }
-    }
+
 
     let coords = getWindowCoordinates(null, position);
 
@@ -153,15 +143,21 @@ function createWindow() {
     if(!url.startsWith("https://")){
       url = origin + url
     }
-    console.log("Does win exist", doesWindowExist(url))
+    console.log("Opening popup", url)
     if(doesWindowExist(url)){
       console.log("Window exists - not reopening");
     }else{
-      console.log("Opening popup", url)
       if(url.indexOf("/workflow/checkinsummary") >= 0){
         position = "bottom-right"
       }else if(url.indexOf("/summon") >= 0){
         position = "top-center"
+      }
+
+
+      if(url.indexOf(this.origin+"/file") < 0){
+        console.log("Opening a file")
+        shell.openExternal(url);
+        return;
       }
 
       console.log("Opening at position", position)
@@ -171,7 +167,8 @@ function createWindow() {
       popupWindowOptions.y = coord.y
       popupWindowOptions.width = coord.width
       popupWindowOptions.height = coord.height
-      console.log("Popup window options:",popupWindowOptions)
+
+      //console.log("Popup window options:",popupWindowOptions)
       //content size is too large
       //popupWindowOptions.useContentSize = false
       const popup = new BrowserWindow(popupWindowOptions)
@@ -182,6 +179,20 @@ function createWindow() {
       }
     }
   });
+
+
+  function isPopupURL(url){
+    url = url.toLowerCase();
+    if(url.startsWith(this.origin+"/workflow/checkinsummary")){
+      return true;
+    }if(url.startsWith(this.origin+"/patientinfo")){
+      return true;
+    }
+    if(url.startsWith(this.origin+"/teampopup")){
+      return true;
+    }
+    return false;
+  }
 
   function getWindowCoordinates(size, position){
     let offset = 10
@@ -195,6 +206,10 @@ function createWindow() {
     }
     if(size == 'chat'){
       output.height = 650 / scaleFactor;
+    }
+    if(size == 'fullscreen'){
+      output.height = dimensions.height
+      output.width = dimensions.width
     }
 
     if(position == 'bottom-right'){
